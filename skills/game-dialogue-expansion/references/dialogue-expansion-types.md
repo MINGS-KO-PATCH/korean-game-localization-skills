@@ -376,9 +376,33 @@ After encoding all translated text, recompute the canonical boundary list once. 
 
 The catalog must resolve identity from structural evidence such as a validated table extent, consumer lookup, or an approved per-revision map. A value match alone is only a candidate. Unknown characters must fail encoding; silently dropping them changes cumulative lengths and corrupts later references.
 
+### Automatic discovery of the reference-table start
+
+Do not require the user to supply a known start address. When the first text address and canonical cumulative boundaries can be established, derive a candidate table immediately preceding the text:
+
+```text
+allowed = set(original_cumulative_boundaries) union {proven_literals}
+position = text_start - 4
+
+while position >= 0 and read_u32le(position) in allowed:
+    position -= 4
+
+candidate_start = position + 4
+candidate_end = text_start
+```
+
+For original `SRVC_35.bin`, the first valid text starts at `0x2B08`. Every aligned word from `0x2B04` backward through `0x2274` is an original cumulative boundary or allowed zero. The preceding word at `0x2270` is `0x00000003`, which is not in the allowed set, so the derived start is `0x2274`. The extent is exact:
+
+```text
+0x2B08 - 0x2274 = 0x894 = 2,196 = 549 × 4
+```
+
+Report this as a strong candidate only after checking text decoding at `candidate_end`, four-byte alignment, slot coverage, and consistency with the extracted population. If an unrelated preceding word happens to equal a boundary, backward scanning can overrun the real table. Resolve that case with a header/count, neighboring record grammar, cross-file comparison, consumer evidence, or controlled differential testing. If no unique extent can be established, return `NOT YET ESTABLISHED` and request the next evidence instead of inventing an address.
+
 ### Current evidence
 
 - Historical calculated point file `포인트35`: 2,196 bytes, exactly 549 little-endian words; SHA-256 `9ee8217d595fb141c4daa0806df5511aba19fd14ec12431f23df0cb8fc546752`.
+- Original `SRVC_35.bin`: the Type 8 table is automatically derivable as `[0x2274, 0x2B08)` by the backward boundary scan above; the user need not know `0x2274` in advance.
 - Historical point workbook `SRVC_35.xlsx`: `SHEET1` maps reference slots to `SHEET2` cumulative boundaries with formulas such as slot offsets `0x00..0x10` mapping to text rows `6, 5, 4, 3, 2`.
 - The saved calculated point file agrees with 544 of 549 formula/literal results reconstructed from the current workbook. Five slots differ, so the workbook and output are useful evidence of the method but not a byte-identical final provenance pair. Treat the discrepancies as unresolved revision or manual-edit history.
 - Earlier `SRVC_2.bin` inspection also showed cumulative boundaries reused by reordered/subset arrays, including repeated equal boundaries. This supports the relation but does not by itself establish every SRVC file's complete reference population.
