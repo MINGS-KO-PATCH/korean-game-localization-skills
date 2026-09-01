@@ -1,6 +1,6 @@
 # Verified dialogue-expansion structures
 
-This is the integrated, extensible record of dialogue-expansion structures established during Korean localization work. Types 1–5 are verified patterns. Type 6 is intentionally provisional because parts of its exception handling and runtime proof may be improved. The type numbers are local working names. Match the relations and evidence, not the label.
+This is the integrated, extensible record of dialogue-expansion structures established during Korean localization work. Types 1–5 are verified patterns. Types 6–7 are intentionally provisional because parts of their exception handling, boundary interpretation, or runtime proof may be improved. The type numbers are local working names. Match the relations and evidence, not the label.
 
 ## Comparison map
 
@@ -12,6 +12,7 @@ This is the integrated, extensible record of dialogue-expansion structures estab
 | 4. Nested-offset blocks | Outer 4-byte table plus record-local 2-byte offsets | File absolute outside, block relative inside | Recompute local field offsets and all later outer block starts | Preserve fixed metadata and handle exceptional delimiter populations |
 | 5. Lua 5.1 size-prefixed string | Per-string 4-byte size including trailing null | Sequential Lua binary chunk | Rewrite that string size; following structures move through serialization | Size is not an offset; preserve chunk grammar and reject unmapped characters |
 | 6. Two-level section directory (provisional) | Top-level section directory and complete inner pointer population | File-absolute section starts; section-relative inner targets | Recompute section sizes, later section starts, and every affected inner relative target | 4-byte text alignment, 16-byte file alignment, protected commands, and explicit embedded-reference exceptions |
+| 7. 4-byte ID plus cumulative length (provisional) | 8-byte entries: original ID/key plus cumulative text end | Text-area relative | Preserve every ID and entry order; recompute cumulative ends from serialized text | Continuous and irregular-ID variants; final tail, padding, and `raw_count` meaning need full confirmation |
 
 ## Shared analysis sequence
 
@@ -274,6 +275,64 @@ Keep Type 6 provisional until later work addresses the relevant items below:
 6. Record the supported source revision hashes and make every manual exception revision-specific.
 
 Do not transfer the section-header constants, 12-byte dialogue header, control values, or manual slots to another title or revision without re-establishing them.
+
+## Type 7 — 4-byte ID plus 4-byte cumulative text length (provisional)
+
+### Identification and layout
+
+After a 12-byte header, the verified candidates use 8-byte table entries followed by a contiguous text region:
+
+```text
+[raw_count:u32le][fixed1:u32le][fixed2:u32le]
+[entry × table_count]
+
+entry:
+  text_id:u32le
+  cumulative_end:u32le
+
+text_range(0) = [0, cumulative_end[0])
+text_range(i) = [cumulative_end[i-1], cumulative_end[i])
+```
+
+`cumulative_end` is relative to the text-area start and must be nondecreasing and within the established text extent. It is the serialized byte sum through the current entry, not a file-absolute pointer.
+
+The first four bytes are an ID/key, even when they happen to equal `1, 2, 3...`. Do not infer that they are disposable row numbers.
+
+### Variants
+
+- **Type 7-A — continuous ID:** IDs appear as a continuous sequence. Preserve them anyway; continuity is observed data, not permission to regenerate them.
+- **Type 7-B — irregular ID:** IDs use gaps or namespaces such as `1–31`, `50`, `1000–1034`, `10000...`. Preserve every original ID and entry order exactly.
+
+### Rewrite rule
+
+Encode entries in original table order. Copy each original `text_id` unchanged and derive `cumulative_end` from the final serialized byte lengths:
+
+```text
+running = 0
+for entry in original_entry_order:
+    running += len(serialized_text(entry))
+    write_u32le(entry.text_id)
+    write_u32le(running)
+```
+
+Changing an early string affects its cumulative end and every following cumulative value. It does not change later IDs. Reject duplicate, missing, reordered, or newly sequentialized IDs unless a separately established schema transformation explicitly changes the population.
+
+### Current evidence
+
+- `UICOMMONTEXT.BIN_08`: `raw_count=216`; 215 observed table IDs form `1–215`; cumulative values are monotonic.
+- `TOWNTEXT.BIN_11`: `raw_count=127`; 126 observed IDs are unique but irregular, including the runs `1–31`, `50`, `1000–1034`, several `10000` ranges, `100000–100019`, `1000000–1000002`, and `10000000–10000004`.
+- Every observed ID in the two files is identical between the compared source and Korean output. This establishes preservation, not automatic regeneration.
+- Existing scripts that write `struct.pack('<I', i)` would destroy Type 7-B IDs. An improved extractor must export the stored ID, and the reinserter must consume the protected original ID.
+
+### Provisional limits and promotion conditions
+
+- Confirm the exact relation between `raw_count`, table entry count, and any implicit last entry for every file variant.
+- Separate the final indexed text from unindexed tail data and file padding. Do not assume that every byte through EOF belongs to the last string.
+- Prove unchanged full-file round trips for both continuous and irregular-ID examples.
+- Fail on decreasing/out-of-range cumulative values, ID population changes, unknown text bytes, and output/container capacity violations.
+- Verify that the game looks up Type 7-B text by stored ID or otherwise establish the consumer meaning of the first field.
+
+Until these conditions are closed, use Type 7 to preserve and rebuild the observed table safely, but report the expansion gate as `CONDITIONAL` rather than universally `EXPANDABLE`.
 
 ## Evidence standard for future additions
 
