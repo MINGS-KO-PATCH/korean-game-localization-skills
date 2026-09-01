@@ -12,7 +12,25 @@ description: >-
 
 Expand dialogue only after determining how each byte-length change propagates through the containing structure. Treat the four documented types as verified expansion patterns and comparison models, not universal format names.
 
-Read [references/dialogue-expansion-types.md](references/dialogue-expansion-types.md) whenever identifying, extracting, rebuilding, or expanding dialogue. It contains Types 1–5 as verified patterns and Type 6 as a provisional pattern with an explicit improvement backlog.
+Read [references/dialogue-expansion-types.md](references/dialogue-expansion-types.md) whenever identifying, extracting, rebuilding, or expanding dialogue. It contains Types 1–5 as verified patterns and Types 6–7 as provisional patterns with explicit improvement conditions.
+
+## Expansion feasibility gate
+
+Before extracting dialogue for translation, determine whether byte-length expansion can be rebuilt safely. Do not begin bulk extraction merely because text can be decoded.
+
+1. Identify the authoritative entry population and boundary source: length field, cumulative table, absolute pointer table, nested table, or consumer-defined structure.
+2. Determine each value's width, endianness, origin, and meaning. Distinguish IDs from positions and lengths from offsets.
+3. Predict every field affected when one representative string grows and shrinks. Include inner records, sections, compressed members, archives, filesystem metadata, load buffers, and runtime consumers when present.
+4. Prove an unchanged extraction-and-reinsertion round trip over the declared extent.
+5. Perform a controlled one-entry length change and verify all derived values, final readback, and the real consumer path when available.
+
+Report the gate as one of:
+
+- `EXPANDABLE`: the population, propagation rules, capacity, rebuild path, and verification scope are established.
+- `CONDITIONAL`: a bounded expansion policy is established, but named capacity, container, exception, or runtime conditions remain.
+- `NOT YET ESTABLISHED`: decoding or extraction works, but safe length-changing reinsertion is not proven.
+
+Only scale extraction for translation after `EXPANDABLE`, or after the user explicitly accepts the stated limitations of `CONDITIONAL`. Never report `NOT YET ESTABLISHED` as impossible; state the next evidence needed.
 
 ## Working rules
 
