@@ -37,6 +37,7 @@ Only scale extraction for translation after `EXPANDABLE`, or after the user expl
 - Identify the coordinate system of every value: file absolute, block relative, text-area relative, or record-local.
 - Distinguish a length from a start position by testing consecutive records and exact layout equations. Monotonic values alone are insufficient.
 - Establish the authoritative boundary source. Prefer the verified length or pointer population over delimiter scanning; scanning can miss empty or shared entries.
+- When the user does not know a pointer-table address, derive candidate extents from established text starts and boundary relations. For a table immediately before text, scan backward in field-width steps while every value satisfies the type's allowed set, then validate the stopping boundary and full extent. Never require a user-supplied address when it can be derived, and never guess one when the evidence is ambiguous.
 - Model every dependency layer affected by changed byte length. A nested structure may require both local offsets and outer pointers to be rebuilt.
 - Preserve headers, metadata, duplicate pointers, empty entries, terminators, padding, and exceptional records unless their meanings and rewrite rules are established.
 - Rebuild derived values from final serialized output. Do not accumulate patches against already modified offsets.
