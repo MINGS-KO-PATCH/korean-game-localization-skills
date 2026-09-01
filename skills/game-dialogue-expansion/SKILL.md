@@ -12,7 +12,7 @@ description: >-
 
 Expand dialogue only after determining how each byte-length change propagates through the containing structure. Treat the four documented types as verified expansion patterns and comparison models, not universal format names.
 
-Read [references/dialogue-expansion-types.md](references/dialogue-expansion-types.md) whenever identifying, extracting, rebuilding, or expanding dialogue. It contains Types 1–5 as verified patterns and Types 6–7 as provisional patterns with explicit improvement conditions.
+Read [references/dialogue-expansion-types.md](references/dialogue-expansion-types.md) whenever identifying, extracting, rebuilding, or expanding dialogue. It contains Types 1–5 as verified patterns and Types 6–8 as provisional patterns with explicit improvement conditions.
 
 ## Expansion feasibility gate
 
