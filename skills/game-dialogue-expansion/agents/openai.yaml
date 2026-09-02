@@ -1,5 +1,5 @@
 interface:
   display_name: "게임 대사 확장"
-  short_description: "길이 변화에 맞춰 대사와 다층 오프셋을 안전하게 확장"
+  short_description: "대사 길이·오프셋 분석과 확장형 추출·재삽입 전용"
   default_prompt: "$game-dialogue-expansion을 사용해 이 파일의 대사 구조를 판별하고 안전한 대사 확장 규칙을 적용해 주세요."
 
