@@ -1,18 +1,36 @@
 ---
 name: game-dialogue-expansion
 description: >-
-  Expand game dialogue safely by analyzing and rebuilding length fields,
-  cumulative offsets, absolute pointer tables, and nested record-local offsets.
-  Use for Korean-patch work when translated dialogue changes byte length or an
-  unknown binary text layout must be identified before reinsertion. 게임 한글화의
-  대사 확장과 오프셋·포인터·길이 필드·중첩 구조 재계산에 사용한다.
+  Analyze and implement game-dialogue byte-length expansion by rebuilding
+  length fields, offsets, pointers, and nested sizes. Use this focused skill
+  alone for dialogue expansion, binary text-layout classification, or an
+  expansion-safe extractor/reinserter. Do not co-apply create-kr-patch to the
+  same structure analysis; use create-kr-patch instead for fonts, graphics,
+  hooks, full patch builds, or end-to-end localization. 게임 대사 확장·오프셋
+  분석과 확장형 추출기·재삽입기 제작에 단독으로 사용한다.
 ---
 
 # Expand game dialogue safely
 
-Expand dialogue only after determining how each byte-length change propagates through the containing structure. Treat the four documented types as verified expansion patterns and comparison models, not universal format names.
+Expand dialogue only after determining how each byte-length change propagates through the containing structure. Treat the documented types as comparison models, not universal format names.
 
-Read [references/dialogue-expansion-types.md](references/dialogue-expansion-types.md) whenever identifying, extracting, rebuilding, or expanding dialogue. It contains Types 1–5 as verified patterns and Types 6–9 as provisional patterns with explicit improvement conditions.
+## Exclusive routing and selective references
+
+Do not load `create-kr-patch` for the same dialogue-structure analysis. Use this skill alone when the requested result is expansion feasibility, Type classification, offset or length rebuilding, a dialogue extractor/reinserter, or spreadsheet interchange for dialogue. Use `create-kr-patch` alone when the request is broader and primarily concerns fonts, graphics, executable hooks, complete patch production, emulator QA, or release management. In a full localization project, finish the bounded dialogue-expansion subtask here and return only its findings and artifacts to the broader workflow.
+
+For every new binary, read [references/type-index.md](references/type-index.md) first. It is the only reference loaded before classification. Then read only the one matching Type file, or at most two Type files when the evidence genuinely leaves two candidates. Do not read every Type file and do not read the legacy integrated reference during ordinary analysis.
+
+| Candidate | Detailed reference |
+|---|---|
+| Type 1 | [references/type-1.md](references/type-1.md) |
+| Type 2 | [references/type-2.md](references/type-2.md) |
+| Type 3 | [references/type-3.md](references/type-3.md) |
+| Type 4 | [references/type-4.md](references/type-4.md) |
+| Type 5 | [references/type-5.md](references/type-5.md) |
+| Type 6 | [references/type-6.md](references/type-6.md) |
+| Type 7 | [references/type-7.md](references/type-7.md) |
+| Type 8 | [references/type-8.md](references/type-8.md) |
+| Type 9 | [references/type-9.md](references/type-9.md) |
 
 ## Expansion feasibility gate
 
@@ -47,7 +65,7 @@ Only scale extraction for translation after `EXPANDABLE`, or after the user expl
 
 ## Adding a verified type
 
-Append it to the integrated reference only after recording:
+Add or update its individual Type reference and the short index only after recording:
 
 1. a discriminating byte-layout equation and coordinate basis;
 2. the authoritative entry population and boundary source;
