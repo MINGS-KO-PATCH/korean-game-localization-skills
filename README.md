@@ -40,6 +40,24 @@ EXPANDABLE / CONDITIONAL / NOT YET ESTABLISHED
 - **`CONDITIONAL`**: 정해진 범위에서는 가능하지만 예외·용량·컨테이너·런타임 조건이 남음
 - **`NOT YET ESTABLISHED`**: 문자는 추출되지만 길이를 바꾸는 재삽입 안전성이 아직 증명되지 않음
 
+## 스킬 선택과 토큰 절약
+
+대사 길이·오프셋·포인터 분석, Type 판별, 확장형 추출기·재삽입기 또는 번역용 엑셀 왕복 작업에는 `game-dialogue-expansion`만 사용합니다. 같은 구조 분석에 `create-kr-patch`를 중복 적용하지 않습니다. 폰트, 그래픽, 실행 코드 후킹, 전체 패치 빌드, 에뮬레이터 QA와 배포처럼 한글패치 전체 범위가 중심일 때는 `create-kr-patch`를 사용합니다.
+
+`game-dialogue-expansion`은 먼저 짧은 Type 판별표만 읽고 후보를 고른 뒤 해당 Type 상세 문서 하나만 읽습니다. 근거가 실제로 두 후보 사이에 남을 때만 두 문서를 읽으며, Type 1~9 전체 상세 문서를 한꺼번에 불러오지 않습니다.
+
+```text
+대사 확장 단독 작업
+→ game-dialogue-expansion
+
+전체 한글패치 작업
+→ create-kr-patch
+
+전체 작업 중 대사 확장 하위 단계
+→ 해당 단계에서만 game-dialogue-expansion
+→ 결과와 산출물만 전체 작업으로 반환
+```
+
 ## 지원하는 대사 확장 구조
 
 | Type | 구조 | 읽는 기준 | 길이가 바뀔 때 |
